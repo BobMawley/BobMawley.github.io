@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<body>
+<h1>Testing</h1>
+<script>
+fetch('http://localhost:31460/')
+  .then(r => r.text())
+  .then(d => document.write('<pre>' + d + '</pre>'))
+  .catch(e => document.write('Error: ' + e));
+</script>
+<iframe src="http://localhost:31460/"></iframe>
+</body>
+</html>
