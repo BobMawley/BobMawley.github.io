@@ -1,7 +1,7 @@
 <script>
 // Test command injection
 fetch('http://localhost:8080/config', {
-    method: 'POST',
+    method: 'PUT',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
         target_id: '"; ls -la; echo "',
