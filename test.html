@@ -1,13 +1,16 @@
-<!DOCTYPE html>
-<html>
-<body>
-<h1>Testing</h1>
 <script>
-fetch('http://localhost:31460/')
-  .then(r => r.text())
-  .then(d => document.write('<pre>' + d + '</pre>'))
-  .catch(e => document.write('Error: ' + e));
+fetch('http://localhost:8080/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+        target_id: 'test',
+        url: 'http://test.com',
+        html: '<h1>test</h1>',
+        content_type: 'text/html',
+        source: 'manual'
+    })
+})
+.then(r => r.text())
+.then(data => document.write(data))
+.catch(e => document.write('Error: ' + e));
 </script>
-<iframe src="http://localhost:31460/"></iframe>
-</body>
-</html>
