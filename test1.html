@@ -1,0 +1,13 @@
+<script>
+// Test command injection
+fetch('http://localhost:8080/config', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+        target_id: '"; ls -la; echo "',
+        url: 'file:///etc/passwd',
+        html: '<script>alert(1)</script>',
+        source: 'test'
+    })
+}).then(r => r.text()).then(d => console.log(d));
+</script>
