@@ -1,0 +1,16 @@
+<script>
+// Try bearer token
+fetch('http://localhost:8080/api', {
+    headers: {'Authorization': 'Bearer test'}
+}).then(r => r.text()).then(d => document.write(d));
+
+// Try basic auth
+fetch('http://localhost:8080/api', {
+    headers: {'Authorization': 'Basic ' + btoa('admin:admin')}
+}).then(r => r.text()).then(d => document.write(d));
+
+// Try X-Auth-Token
+fetch('http://localhost:8080/api', {
+    headers: {'X-Auth-Token': 'test'}
+}).then(r => r.text()).then(d => document.write(d));
+</script>
